@@ -234,15 +234,30 @@ unused_qualifications = "deny"
 # patch to experimental decoder
 # patch to https://github.com/apache/arrow-rs/pull/7850
 [patch.crates-io]
-arrow = { git = "https://github.com/apache/arrow-rs.git", rev = "8ebe57918fab8049357e0051c17b6387d76fdaf9" }
-arrow-array = { git = "https://github.com/apache/arrow-rs.git", rev = "8ebe57918fab8049357e0051c17b6387d76fdaf9" }
-arrow-buffer = { git = "https://github.com/apache/arrow-rs.git", rev = "8ebe57918fab8049357e0051c17b6387d76fdaf9" }
-arrow-cast = { git = "https://github.com/apache/arrow-rs.git", rev = "8ebe57918fab8049357e0051c17b6387d76fdaf9" }
-arrow-data = { git = "https://github.com/apache/arrow-rs.git", rev = "8ebe57918fab8049357e0051c17b6387d76fdaf9" }
-arrow-ipc = { git = "https://github.com/apache/arrow-rs.git", rev = "8ebe57918fab8049357e0051c17b6387d76fdaf9" }
-arrow-schema = { git = "https://github.com/apache/arrow-rs.git", rev = "8ebe57918fab8049357e0051c17b6387d76fdaf9" }
-arrow-select = { git = "https://github.com/apache/arrow-rs.git", rev = "8ebe57918fab8049357e0051c17b6387d76fdaf9" }
-arrow-string = { git = "https://github.com/apache/arrow-rs.git", rev = "8ebe57918fab8049357e0051c17b6387d76fdaf9" }
-arrow-ord = { git = "https://github.com/apache/arrow-rs.git", rev = "8ebe57918fab8049357e0051c17b6387d76fdaf9" }
-arrow-flight = { git = "https://github.com/apache/arrow-rs.git", rev = "8ebe57918fab8049357e0051c17b6387d76fdaf9" }
-parquet = { git = "https://github.com/apache/arrow-rs.git", rev = "8ebe57918fab8049357e0051c17b6387d76fdaf9" }
+# arrow = { git = "https://github.com/apache/arrow-rs.git", rev = "8ebe57918fab8049357e0051c17b6387d76fdaf9" }
+# arrow-array = { git = "https://github.com/apache/arrow-rs.git", rev = "8ebe57918fab8049357e0051c17b6387d76fdaf9" }
+# arrow-buffer = { git = "https://github.com/apache/arrow-rs.git", rev = "8ebe57918fab8049357e0051c17b6387d76fdaf9" }
+# arrow-cast = { git = "https://github.com/apache/arrow-rs.git", rev = "8ebe57918fab8049357e0051c17b6387d76fdaf9" }
+# arrow-data = { git = "https://github.com/apache/arrow-rs.git", rev = "8ebe57918fab8049357e0051c17b6387d76fdaf9" }
+# arrow-ipc = { git = "https://github.com/apache/arrow-rs.git", rev = "8ebe57918fab8049357e0051c17b6387d76fdaf9" }
+# arrow-schema = { git = "https://github.com/apache/arrow-rs.git", rev = "8ebe57918fab8049357e0051c17b6387d76fdaf9" }
+# arrow-select = { git = "https://github.com/apache/arrow-rs.git", rev = "8ebe57918fab8049357e0051c17b6387d76fdaf9" }
+# arrow-string = { git = "https://github.com/apache/arrow-rs.git", rev = "8ebe57918fab8049357e0051c17b6387d76fdaf9" }
+# arrow-ord = { git = "https://github.com/apache/arrow-rs.git", rev = "8ebe57918fab8049357e0051c17b6387d76fdaf9" }
+# arrow-flight = { git = "https://github.com/apache/arrow-rs.git", rev = "8ebe57918fab8049357e0051c17b6387d76fdaf9" }
+# parquet = { git = "https://github.com/apache/arrow-rs.git", rev = "8ebe57918fab8049357e0051c17b6387d76fdaf9" }
+
+parquet = { git = "https://github.com/e6data/e6-arrow-rs.git", branch = "feat-filter-pushdown"}
+arrow-arith = { git = "https://github.com/e6data/e6-arrow-rs.git", branch = "feat-filter-pushdown"}
+arrow-array = { git = "https://github.com/e6data/e6-arrow-rs.git", branch = "feat-filter-pushdown"}
+arrow-buffer = { git = "https://github.com/e6data/e6-arrow-rs.git", branch = "feat-filter-pushdown"}
+arrow-cast = { git = "https://github.com/e6data/e6-arrow-rs.git", branch = "feat-filter-pushdown"}
+arrow-csv = { git = "https://github.com/e6data/e6-arrow-rs.git", branch = "feat-filter-pushdown"}
+arrow-data = { git = "https://github.com/e6data/e6-arrow-rs.git", branch = "feat-filter-pushdown"}
+arrow-ipc = { git = "https://github.com/e6data/e6-arrow-rs.git", branch = "feat-filter-pushdown"}
+arrow-json = { git = "https://github.com/e6data/e6-arrow-rs.git", branch = "feat-filter-pushdown"}
+arrow-ord = { git = "https://github.com/e6data/e6-arrow-rs.git", branch = "feat-filter-pushdown"}
+arrow-row = { git = "https://github.com/e6data/e6-arrow-rs.git", branch = "feat-filter-pushdown"}
+arrow-schema = { git = "https://github.com/e6data/e6-arrow-rs.git", branch = "feat-filter-pushdown"}
+arrow-select = { git = "https://github.com/e6data/e6-arrow-rs.git", branch = "feat-filter-pushdown"}
+arrow-string = { git = "https://github.com/e6data/e6-arrow-rs.git", branch = "feat-filter-pushdown"}
