@@ -53,3 +53,5 @@ pub use no_op::NoOp;
 pub use not::{not, NotExpr};
 pub use try_cast::{try_cast, TryCastExpr};
 pub use unknown_column::UnKnownColumn;
+
+pub use in_list::make_set;

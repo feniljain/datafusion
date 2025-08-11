@@ -181,7 +181,7 @@ where
 }
 
 /// Creates a `Box<dyn Set>` for the given list of `IN` expressions and `batch`
-fn make_set(array: &dyn Array) -> Result<Arc<dyn Set>> {
+pub fn make_set(array: &dyn Array) -> Result<Arc<dyn Set>> {
     Ok(downcast_primitive_array! {
         array => Arc::new(ArraySet::new(array, make_hash_set(array))),
         DataType::Boolean => {
