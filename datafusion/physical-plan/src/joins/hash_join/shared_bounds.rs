@@ -298,6 +298,10 @@ impl SharedBoundsAccumulator {
             if !inner.bounds.is_empty() {
                 let filter_expr =
                     self.create_filter_from_partition_bounds(&inner.bounds)?;
+                println!(
+                    "DEBUG::rs::report_partition_bounds::updating dynamic filter, new expr::{:?}",
+                    filter_expr
+                );
                 self.dynamic_filter.update(filter_expr)?;
             }
         }

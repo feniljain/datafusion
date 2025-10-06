@@ -706,6 +706,11 @@ impl FileSource for ParquetSource {
         filters: Vec<Arc<dyn PhysicalExpr>>,
         config: &ConfigOptions,
     ) -> datafusion_common::Result<FilterPushdownPropagation<Arc<dyn FileSource>>> {
+        println!(
+            "DEBUG::rs::ParquetSource::try_pushdown_filters::filters received::{:?}",
+            filters
+        );
+
         let Some(file_schema) = self.file_schema.clone() else {
             return Ok(FilterPushdownPropagation::with_parent_pushdown_result(
                 vec![PushedDown::No; filters.len()],
@@ -722,17 +727,29 @@ impl FileSource for ParquetSource {
         let table_pushdown_enabled = self.pushdown_filters();
         let pushdown_filters = table_pushdown_enabled || config_pushdown_enabled;
 
+        println!(
+            "DEBUG::rs::ParquetSource::try_pushdown_filters::file schema::{:?}",
+            file_schema
+        );
+
         let mut source = self.clone();
         let filters: Vec<PushedDownPredicate> = filters
             .into_iter()
             .map(|filter| {
-                if can_expr_be_pushed_down_with_schemas(&filter, &file_schema) {
-                    PushedDownPredicate::supported(filter)
-                } else {
-                    PushedDownPredicate::unsupported(filter)
-                }
+                PushedDownPredicate::supported(filter)
+                // if can_expr_be_pushed_down_with_schemas(&filter, &file_schema) {
+                //     PushedDownPredicate::supported(filter)
+                // } else {
+                //     PushedDownPredicate::unsupported(filter)
+                // }
             })
             .collect();
+
+        println!(
+            "DEBUG::rs::ParquetSource::try_pushdown_filters::can_pushdown_decision::{:?}",
+            filters
+        );
+
         if filters
             .iter()
             .all(|f| matches!(f.discriminant, PushedDown::No))

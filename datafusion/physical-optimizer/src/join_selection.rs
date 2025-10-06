@@ -63,11 +63,16 @@ pub(crate) fn should_swap_join_order(
     // Get the left and right table's total bytes
     // If both the left and right tables contain total_byte_size statistics,
     // use `total_byte_size` to determine `should_swap_join_order`, else use `num_rows`
+    println!("DEBUG::rs::left::{}", left.name());
     let left_stats = left.partition_statistics(None)?;
+    println!("DEBUG::rs::left_stats::{}", left_stats);
+    println!("DEBUG::rs::right::{}", right.name());
     let right_stats = right.partition_statistics(None)?;
+    println!("DEBUG::rs::right_stats::{}", right_stats);
+
     // First compare `total_byte_size` of left and right side,
     // if information in this field is insufficient fallback to the `num_rows`
-    match (
+    let res = match (
         left_stats.total_byte_size.get_value(),
         right_stats.total_byte_size.get_value(),
     ) {
@@ -79,7 +84,11 @@ pub(crate) fn should_swap_join_order(
             (Some(l), Some(r)) => Ok(l > r),
             _ => Ok(false),
         },
-    }
+    };
+
+    println!("DEBUG::rs::res::{:?}", res);
+
+    res
 }
 
 fn supports_collect_by_thresholds(

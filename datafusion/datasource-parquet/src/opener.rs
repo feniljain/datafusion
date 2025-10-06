@@ -27,6 +27,7 @@ use arrow::array::RecordBatch;
 use datafusion_datasource::file_meta::FileMeta;
 use datafusion_datasource::file_stream::{FileOpenFuture, FileOpener};
 use datafusion_datasource::schema_adapter::SchemaAdapterFactory;
+use datafusion_physical_expr::expressions::DynamicFilterPhysicalExpr;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::task::{Context, Poll};
@@ -258,6 +259,26 @@ impl FileOpener for ParquetOpener {
                 }
             }
 
+            println!(
+                "DEBUG::rs::FileOpener::open::partition_values::{:?}",
+                file.partition_values,
+            );
+
+            println!(
+                "DEBUG::rs::FileOpener::open::partition_fields::{:?}",
+                partition_fields,
+            );
+
+            println!(
+                "DEBUG::rs::FileOpener::open::logical_file_schema::{:?}",
+                logical_file_schema
+            );
+
+            println!(
+                "DEBUG::rs::FileOpener::open::physical_file_schema::{:?}",
+                physical_file_schema
+            );
+
             // Adapt the predicate to the physical file schema.
             // This evaluates missing columns and inserts any necessary casts.
             if let Some(expr_adapter_factory) = expr_adapter_factory {
@@ -275,10 +296,21 @@ impl FileOpener for ParquetOpener {
                             )
                             .with_partition_values(partition_values)
                             .rewrite(p)?;
+
+                        println!("DEBUG::rs::FileOpener::open::expr::{:?}", expr);
+
                         // After rewriting to the file schema, further simplifications may be possible.
                         // For example, if `'a' = col_that_is_missing` becomes `'a' = NULL` that can then be simplified to `FALSE`
                         // and we can avoid doing any more work on the file (bloom filters, loading the page index, etc.).
-                        PhysicalExprSimplifier::new(&physical_file_schema).simplify(expr)
+                        let new_expr = PhysicalExprSimplifier::new(&physical_file_schema)
+                            .simplify(expr);
+
+                        println!(
+                            "DEBUG::rs::FileOpener::open::simplified expr::{:?}",
+                            new_expr
+                        );
+
+                        new_expr
                     })
                     .transpose()?;
                 predicate_file_schema = Arc::clone(&physical_file_schema);
@@ -330,6 +362,30 @@ impl FileOpener for ParquetOpener {
                     &file_metrics,
                     &schema_adapter_factory,
                 );
+
+                let predicate_c = Arc::clone(&predicate);
+
+                if let Ok(dynamic_filter) =
+                    Arc::downcast::<DynamicFilterPhysicalExpr>(predicate_c)
+                {
+                    println!(
+                        "DEBUG::rs::FileOpener::open::dynamic filter physical expr::{:?}",
+                        dynamic_filter.current()
+                    );
+
+                    // let a = &file.partition_values;
+                    // let b = &a[0];
+                    // let partition_vals = b.clone();
+                    // let partition_val = match partition_vals {
+                    //     datafusion_common::ScalarValue::Int32(val) => val.unwrap(),
+                    //     _ => todo!(),
+                    // };
+                    //
+                    // let v = vec![Some(partition_val)];
+                    // let batch = record_batch!(("ss_sold_date_sk", Int32, v))?;
+                    //
+                    // dynamic_filter.evaluate(&batch);
+                }
 
                 match row_filter {
                     Ok(Some(filter)) => {
