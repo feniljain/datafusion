@@ -26,6 +26,8 @@ use crate::opener::ParquetOpener;
 use crate::row_filter::can_expr_be_pushed_down_with_schemas;
 use crate::DefaultParquetFileReaderFactory;
 use crate::ParquetFileReaderFactory;
+use arrow::datatypes::Field;
+use arrow::datatypes::Schema;
 use datafusion_common::config::ConfigOptions;
 #[cfg(feature = "parquet_encryption")]
 use datafusion_common::config::EncryptionFactoryOptions;
@@ -41,6 +43,7 @@ use datafusion_common::{DataFusionError, Statistics};
 use datafusion_datasource::file::FileSource;
 use datafusion_datasource::file_scan_config::FileScanConfig;
 use datafusion_physical_expr::conjunction;
+use datafusion_physical_expr::expressions::DynamicFilterPhysicalExpr;
 use datafusion_physical_expr_adapter::DefaultPhysicalExprAdapterFactory;
 use datafusion_physical_expr_common::physical_expr::fmt_sql;
 use datafusion_physical_expr_common::physical_expr::PhysicalExpr;
@@ -287,6 +290,7 @@ pub struct ParquetSource {
     /// Optional hint for the size of the parquet metadata
     pub(crate) metadata_size_hint: Option<usize>,
     pub(crate) projected_statistics: Option<Statistics>,
+    pub(crate) table_partition_cols: Vec<Arc<Field>>,
     #[cfg(feature = "parquet_encryption")]
     pub(crate) encryption_factory: Option<Arc<dyn EncryptionFactory>>,
 }
@@ -315,6 +319,11 @@ impl ParquetSource {
 
     fn with_metrics(mut self, metrics: ExecutionPlanMetricsSet) -> Self {
         self.metrics = metrics;
+        self
+    }
+
+    pub fn with_table_partition_cols(mut self, partition_cols: Vec<Arc<Field>>) -> Self {
+        self.table_partition_cols = partition_cols;
         self
     }
 
@@ -706,11 +715,6 @@ impl FileSource for ParquetSource {
         filters: Vec<Arc<dyn PhysicalExpr>>,
         config: &ConfigOptions,
     ) -> datafusion_common::Result<FilterPushdownPropagation<Arc<dyn FileSource>>> {
-        println!(
-            "DEBUG::rs::ParquetSource::try_pushdown_filters::filters received::{:?}",
-            filters
-        );
-
         let Some(file_schema) = self.file_schema.clone() else {
             return Ok(FilterPushdownPropagation::with_parent_pushdown_result(
                 vec![PushedDown::No; filters.len()],
@@ -727,28 +731,49 @@ impl FileSource for ParquetSource {
         let table_pushdown_enabled = self.pushdown_filters();
         let pushdown_filters = table_pushdown_enabled || config_pushdown_enabled;
 
-        println!(
-            "DEBUG::rs::ParquetSource::try_pushdown_filters::file schema::{:?}",
-            file_schema
-        );
-
         let mut source = self.clone();
         let filters: Vec<PushedDownPredicate> = filters
             .into_iter()
             .map(|filter| {
-                PushedDownPredicate::supported(filter)
-                // if can_expr_be_pushed_down_with_schemas(&filter, &file_schema) {
-                //     PushedDownPredicate::supported(filter)
-                // } else {
-                //     PushedDownPredicate::unsupported(filter)
-                // }
+                let filter_c = Arc::clone(&filter);
+                if Arc::downcast::<DynamicFilterPhysicalExpr>(filter_c).is_ok() {
+                    PushedDownPredicate::supported(filter)
+                } else {
+                    let mut fields_with_partition_cols = vec![];
+                    for field in file_schema.fields().iter() {
+                        let new_field = Arc::new(Field::new(
+                            field.name(),
+                            field.data_type().clone(),
+                            field.is_nullable(),
+                        ));
+
+                        fields_with_partition_cols.push(new_field);
+                    }
+
+                    for field in &self.table_partition_cols {
+                        let new_field = Arc::new(Field::new(
+                            field.name(),
+                            field.data_type().clone(),
+                            field.is_nullable(),
+                        ));
+
+                        fields_with_partition_cols.push(new_field);
+                    }
+
+                    let schema_with_partition_cols =
+                        Schema::new(fields_with_partition_cols);
+
+                    if can_expr_be_pushed_down_with_schemas(
+                        &filter,
+                        &schema_with_partition_cols,
+                    ) {
+                        PushedDownPredicate::supported(filter)
+                    } else {
+                        PushedDownPredicate::unsupported(filter)
+                    }
+                }
             })
             .collect();
-
-        println!(
-            "DEBUG::rs::ParquetSource::try_pushdown_filters::can_pushdown_decision::{:?}",
-            filters
-        );
 
         if filters
             .iter()

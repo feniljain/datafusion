@@ -445,10 +445,6 @@ impl HashJoinExec {
         // Initialize both dynamic filter and bounds accumulator to None
         // They will be set later if dynamic filtering is enabled
 
-        println!("DEBUG::rs::try_new::left::{:?}", left);
-        println!("DEBUG::rs::try_new::right::{:?}", right);
-        println!("DEBUG::rs::try_new::on::{:?}", on);
-
         Ok(HashJoinExec {
             left,
             right,
@@ -1140,14 +1136,6 @@ impl ExecutionPlan for HashJoinExec {
             self.right(),
         )?;
 
-        println!(
-            "DEBUG::rs::gather_filters_for_pushdown::left_child::{:?}",
-            left_child
-        );
-        println!(
-            "DEBUG::rs::gather_filters_for_pushdown::right_child::{:?}",
-            right_child
-        );
         // Add dynamic filters in Post phase if enabled
         if matches!(phase, FilterPushdownPhase::Post)
             && config.optimizer.enable_dynamic_filter_pushdown
@@ -1157,15 +1145,6 @@ impl ExecutionPlan for HashJoinExec {
 
             right_child = right_child.with_self_filter(dynamic_filter);
         }
-
-        println!(
-            "DEBUG::rs::gather_filters_for_pushdown::left_child::{:?}",
-            left_child
-        );
-        println!(
-            "DEBUG::rs::gather_filters_for_pushdown::right_child::{:?}",
-            right_child
-        );
 
         Ok(FilterDescription::new()
             .with_child(left_child)
@@ -1190,11 +1169,6 @@ impl ExecutionPlan for HashJoinExec {
                 child_pushdown_result,
             ));
         }
-
-        println!(
-            "DEBUG::rs::handle_child_pushdown_result::{:?}",
-            child_pushdown_result
-        );
 
         let mut result = FilterPushdownPropagation::if_any(child_pushdown_result.clone());
         assert_eq!(child_pushdown_result.self_filters.len(), 2); // Should always be 2, we have 2 children
