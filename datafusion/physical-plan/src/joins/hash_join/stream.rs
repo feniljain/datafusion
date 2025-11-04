@@ -537,6 +537,12 @@ impl HashJoinStream {
             .probe_hit_rate
             .add_part(distinct_right_indices_count);
 
+        self.join_metrics.avg_fanout.add_part(left_indices.len());
+
+        self.join_metrics
+            .avg_fanout
+            .add_total(distinct_right_indices_count);
+
         // apply join filter if exists
         let (left_indices, right_indices) = if let Some(filter) = &self.filter {
             apply_join_filter_to_indices(
