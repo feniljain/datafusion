@@ -483,6 +483,10 @@ impl HashJoinStream {
         let state = self.state.try_as_process_probe_batch_mut()?;
         let build_side = self.build_side.try_as_ready_mut()?;
 
+        self.join_metrics
+            .probe_hit_rate
+            .add_total(state.batch.num_rows());
+
         let timer = self.join_metrics.join_time.timer();
 
         // if the left side is empty, we can skip the (potentially expensive) join operation
@@ -512,6 +516,26 @@ impl HashJoinStream {
             self.batch_size,
             state.offset,
         )?;
+
+        let mut last_seen: Option<u32> = None;
+        let distinct_right_indices_count = right_indices
+            .iter()
+            .filter(|ele| match ele {
+                Some(ele_val) => {
+                    if last_seen.is_none() || last_seen.unwrap() != *ele_val {
+                        last_seen = Some(*ele_val);
+                        true
+                    } else {
+                        false
+                    }
+                }
+                None => false,
+            })
+            .count();
+
+        self.join_metrics
+            .probe_hit_rate
+            .add_part(distinct_right_indices_count);
 
         // apply join filter if exists
         let (left_indices, right_indices) = if let Some(filter) = &self.filter {
