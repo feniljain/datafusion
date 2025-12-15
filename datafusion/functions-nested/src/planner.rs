@@ -37,7 +37,7 @@ use std::sync::Arc;
 
 use crate::map::map_udf;
 use crate::{
-    array_has::{array_has_all, array_has_udf},
+    array_has::{array_has_all, array_has_all_udf, array_has_udf},
     expr_fn::{array_append, array_concat, array_prepend},
     extract::{array_element, array_slice},
     make_array::make_array,
@@ -132,6 +132,39 @@ impl ExprPlanner for NestedFunctionPlanner {
             )))
         } else {
             plan_err!("Unsupported AnyOp: '{}', only '=' is supported", expr.op)
+        }
+    }
+
+    fn plan_all(
+        &self,
+        expr: RawBinaryExpr,
+        schema: &DFSchema,
+    ) -> Result<PlannerResult<RawBinaryExpr>> {
+        if expr.op == BinaryOperator::Eq {
+            let left_type = expr.left.get_type(schema)?;
+            let is_scalar = match left_type {
+                DataType::Boolean
+                | DataType::Null
+                | DataType::Utf8
+                | DataType::LargeUtf8
+                | DataType::Utf8View => true,
+                _ => false,
+            } || left_type.is_primitive();
+
+            if is_scalar {
+                Ok(PlannerResult::Planned(Expr::ScalarFunction(
+                    ScalarFunction::new_udf(array_has_udf(), vec![expr.right, expr.left]),
+                )))
+            } else {
+                Ok(PlannerResult::Planned(Expr::ScalarFunction(
+                    ScalarFunction::new_udf(
+                        array_has_all_udf(),
+                        vec![expr.right, expr.left],
+                    ),
+                )))
+            }
+        } else {
+            plan_err!("Unsupported AllOp: '{}', only '=' is supported", expr.op)
         }
     }
 }

@@ -620,6 +620,39 @@ impl<S: ContextProvider> SqlToRel<'_, S> {
                 }
                 not_impl_err!("AnyOp not supported by ExprPlanner: {binary_expr:?}")
             }
+            SQLExpr::AllOp {
+                left,
+                compare_op,
+                right,
+            } => {
+                let mut binary_expr = RawBinaryExpr {
+                    op: compare_op,
+                    left: self.sql_expr_to_logical_expr(
+                        *left,
+                        schema,
+                        planner_context,
+                    )?,
+                    right: self.sql_expr_to_logical_expr(
+                        *right,
+                        schema,
+                        planner_context,
+                    )?,
+                };
+                println!("DEBUG::raw binary expr::{:?}", binary_expr);
+                for planner in self.context_provider.get_expr_planners() {
+                    println!("DEBUG::intemediate binary expr::{:?}", binary_expr);
+                    match planner.plan_all(binary_expr, schema)? {
+                        PlannerResult::Planned(expr) => {
+                            println!("DEBUG::planned expr::{}", expr);
+                            return Ok(expr);
+                        }
+                        PlannerResult::Original(expr) => {
+                            binary_expr = expr;
+                        }
+                    }
+                }
+                not_impl_err!("AllOp not supported by ExprPlanner: {binary_expr:?}")
+            }
             #[expect(deprecated)]
             SQLExpr::Wildcard(_token) => Ok(Expr::Wildcard {
                 qualifier: None,

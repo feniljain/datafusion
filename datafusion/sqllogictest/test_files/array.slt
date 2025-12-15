@@ -6469,6 +6469,40 @@ physical_plan
 07)------------RepartitionExec: partitioning=RoundRobinBatch(4), input_partitions=1
 08)--------------LazyMemoryExec: partitions=1, batch_generators=[generate_series: start=1, end=100000, batch_size=8192]
 
+query B
+SELECT 1 = ALL(ARRAY[1,1,1,1]);
+----
+true
+
+## TODO(feniljain)
+query B
+SELECT 'a' = ALL(ARRAY['a','b']);
+----
+true
+
+query B
+SELECT [1,2] = ALL(ARRAY[1,2]);
+----
+true
+
+query B
+SELECT [3,1] = ALL(ARRAY[1,2]);
+----
+false
+
+query B
+SELECT true = ALL(ARRAY[true,true]);
+----
+true
+
+query
+SELECT false = ALL(ARRAY[false,true]);
+
+query B
+SELECT null = ALL(ARRAY[null,null]);
+----
+NULL
+
 query I
 with test AS (SELECT substr(md5(i::text)::text, 1, 32) as needle FROM generate_series(1, 100000) t(i))
 select count(*) from test WHERE array_has(['7f4b18de3cfeb9b4ac78c381ee2ad278', 'a', 'b', 'c'], needle);
