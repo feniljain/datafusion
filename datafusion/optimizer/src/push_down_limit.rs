@@ -464,6 +464,23 @@ mod test {
     }
 
     #[test]
+    fn limit_and_skip_push_down_to_table_scan() -> Result<()> {
+        let table_scan = test_table_scan()?;
+
+        let plan = LogicalPlanBuilder::from(table_scan)
+            .limit(5, Some(1000))?
+            .build()?;
+
+        assert_optimized_plan_equal!(
+            plan,
+            @r"
+        Limit: skip=5, fetch=1000
+          TableScan: test, skip=5, fetch=1000
+        "
+        )
+    }
+
+    #[test]
     fn limit_pushdown_multiple_limits() -> Result<()> {
         let table_scan = test_table_scan()?;
         let noop_plan = LogicalPlan::Extension(Extension {
