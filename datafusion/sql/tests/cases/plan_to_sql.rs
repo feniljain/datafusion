@@ -1278,6 +1278,7 @@ fn test_table_scan_with_empty_projection_and_filter_postgres() {
         Some(vec![]),
         vec![col("id").gt(lit(10))],
         None,
+        None,
     )
     .unwrap()
     .build()
@@ -1299,6 +1300,7 @@ fn test_table_scan_with_empty_projection_and_filter_default_dialect() {
         &schema,
         Some(vec![]),
         vec![col("id").gt(lit(10))],
+        None,
         None,
     )
     .unwrap()
@@ -1483,11 +1485,17 @@ fn test_table_scan_alias() -> Result<()> {
         @"SELECT a.id FROM t1 AS a WHERE ((a.id > 1) AND (a.age < 2))"
     );
 
-    let table_scan_with_fetch =
-        table_scan_with_filter_and_fetch(Some("t1"), &schema, None, vec![], Some(10))?
-            .project(vec![col("id")])?
-            .alias("a")?
-            .build()?;
+    let table_scan_with_fetch = table_scan_with_filter_and_fetch(
+        Some("t1"),
+        &schema,
+        None,
+        vec![],
+        Some(10),
+        None,
+    )?
+    .project(vec![col("id")])?
+    .alias("a")?
+    .build()?;
     let table_scan_with_fetch = plan_to_sql(&table_scan_with_fetch)?;
     assert_snapshot!(
         table_scan_with_fetch,
@@ -1500,6 +1508,7 @@ fn test_table_scan_alias() -> Result<()> {
         Some(vec![0, 1]),
         vec![col("id").gt(lit(1))],
         Some(10),
+        None,
     )?
     .project(vec![col("id")])?
     .alias("a")?
@@ -1665,9 +1674,15 @@ fn test_table_scan_pushdown() -> Result<()> {
         @"SELECT t1.age FROM t1 WHERE (t1.id > t1.age)"
     );
 
-    let table_scan_with_inline_fetch =
-        table_scan_with_filter_and_fetch(Some("t1"), &schema, None, vec![], Some(10))?
-            .build()?;
+    let table_scan_with_inline_fetch = table_scan_with_filter_and_fetch(
+        Some("t1"),
+        &schema,
+        None,
+        vec![],
+        Some(10),
+        None,
+    )?
+    .build()?;
     let table_scan_with_inline_fetch = plan_to_sql(&table_scan_with_inline_fetch)?;
     assert_snapshot!(
         table_scan_with_inline_fetch,
@@ -1680,6 +1695,7 @@ fn test_table_scan_pushdown() -> Result<()> {
         Some(vec![0, 1]),
         vec![],
         Some(10),
+        None,
     )?
     .build()?;
     let table_scan_with_projection_and_inline_fetch =
@@ -1695,6 +1711,7 @@ fn test_table_scan_pushdown() -> Result<()> {
         Some(vec![0, 1]),
         vec![col("id").gt(col("age"))],
         Some(10),
+        None,
     )?
     .build()?;
     let table_scan_with_all = plan_to_sql(&table_scan_with_all)?;
@@ -1716,6 +1733,8 @@ fn test_table_scan_pushdown() -> Result<()> {
         table_scan_with_filter,
         @"SELECT * FROM t1 WHERE (t1.id = 5) AND (t1.id > t1.age)"
     );
+
+    // TODO(feniljain): add OFFSET test cases here
 
     Ok(())
 }

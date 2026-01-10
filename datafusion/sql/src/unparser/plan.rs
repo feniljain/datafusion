@@ -1046,7 +1046,10 @@ impl Unparser<'_> {
     }
 
     fn is_scan_with_pushdown(scan: &TableScan) -> bool {
-        scan.projection.is_some() || !scan.filters.is_empty() || scan.fetch.is_some()
+        scan.projection.is_some()
+            || !scan.filters.is_empty()
+            || scan.fetch.is_some()
+            || scan.skip.is_some()
     }
 
     /// Try to unparse a table scan with pushdown operations into a new subquery plan.
@@ -1135,7 +1138,7 @@ impl Unparser<'_> {
                 }
 
                 if let Some(fetch) = table_scan.fetch {
-                    builder = builder.limit(0, Some(fetch))?;
+                    builder = builder.limit(table_scan.skip.unwrap_or(0), Some(fetch))?;
                 }
 
                 // If the table scan has an alias but no projection or filters, it means no column references are rebased.

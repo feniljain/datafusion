@@ -17,7 +17,7 @@
 
 //! [`PushDownLimit`] pushes `LIMIT` earlier in the query plan
 
-use std::cmp::min;
+use std::cmp::{max, min};
 use std::sync::Arc;
 
 use crate::optimizer::ApplyOrder;
@@ -90,21 +90,19 @@ impl OptimizerRule for PushDownLimit {
             return Ok(Transformed::no(LogicalPlan::Limit(limit)));
         };
 
+        // TODO(feniljain): Change all the other LogicalPlan nodes
+        // to accept skip field and add tests cases for all of them
         match Arc::unwrap_or_clone(limit.input) {
             LogicalPlan::TableScan(mut scan) => {
-                let rows_needed = if fetch != 0 { fetch + skip } else { 0 };
-                let new_fetch = scan
-                    .fetch
-                    .map(|x| min(x, rows_needed))
-                    .or(Some(rows_needed));
-                if new_fetch == scan.fetch {
+                let new_fetch = scan.fetch.map(|x| min(x, fetch)).or(Some(fetch));
+                let new_skip = scan.fetch.map(|x| max(x, skip)).or(Some(skip));
+
+                // push limit and offset into the table scan itself
+                if new_fetch == scan.fetch && new_skip == scan.skip {
                     original_limit(skip, fetch, LogicalPlan::TableScan(scan))
                 } else {
-                    // push limit into the table scan itself
-                    scan.fetch = scan
-                        .fetch
-                        .map(|x| min(x, rows_needed))
-                        .or(Some(rows_needed));
+                    scan.fetch = new_fetch;
+                    scan.skip = new_skip;
                     transformed_limit(skip, fetch, LogicalPlan::TableScan(scan))
                 }
             }

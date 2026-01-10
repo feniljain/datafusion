@@ -260,6 +260,7 @@ fn optimize_projections(
                 filters,
                 fetch,
                 projected_schema: _,
+                skip,
             } = table_scan;
 
             // Get indices referred to in the original (schema with all fields)
@@ -274,6 +275,7 @@ fn optimize_projections(
                 Some(projection),
                 filters,
                 fetch,
+                skip,
             )
             .map(LogicalPlan::TableScan)
             .map(Transformed::yes);
