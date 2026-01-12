@@ -111,6 +111,7 @@ pub struct FFI_TableProvider {
         projections: RVec<usize>,
         filters_serialized: RVec<u8>,
         limit: ROption<usize>,
+        // TODO(feniljain): add offset here?
     ) -> FfiFuture<FFIResult<FFI_ExecutionPlan>>,
 
     /// Return the type of table. See [`TableType`] for options.
@@ -273,7 +274,7 @@ unsafe extern "C" fn scan_fn_wrapper(
 
         let plan = rresult_return!(
             internal_provider
-                .scan(session, Some(&projections), &filters, limit.into())
+                .scan(session, Some(&projections), &filters, limit.into(), None)
                 .await
         );
 
@@ -458,6 +459,7 @@ impl TableProvider for ForeignTableProvider {
         projection: Option<&Vec<usize>>,
         filters: &[Expr],
         limit: Option<usize>,
+        _offset: Option<usize>, // TODO(feniljain): use this
     ) -> Result<Arc<dyn ExecutionPlan>> {
         let session = FFI_SessionRef::new(session, None, self.0.logical_codec.clone());
 

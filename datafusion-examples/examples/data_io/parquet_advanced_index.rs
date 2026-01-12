@@ -469,6 +469,7 @@ impl TableProvider for IndexTableProvider {
         projection: Option<&Vec<usize>>,
         filters: &[Expr],
         limit: Option<usize>,
+        offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         let indexed_file = &self.indexed_file;
         let predicate = self.filters_to_predicate(state, filters)?;
@@ -502,6 +503,7 @@ impl TableProvider for IndexTableProvider {
         );
         let file_scan_config = FileScanConfigBuilder::new(object_store_url, file_source)
             .with_limit(limit)
+            .with_offset(offset)
             .with_projection_indices(projection.cloned())?
             .with_file(partitioned_file)
             .build();

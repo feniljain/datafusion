@@ -402,8 +402,8 @@ impl<'a, 'b> PgJsonVisitor<'a, 'b> {
                     object["Fetch"] = serde_json::Value::Number((*f).into());
                 }
 
-                if let Some(f) = skip {
-                    object["Skip"] = serde_json::Value::Number((*f).into());
+                if let Some(s) = skip {
+                    object["Skip"] = serde_json::Value::Number((*s).into());
                 }
 
                 object
@@ -472,7 +472,9 @@ impl<'a, 'b> PgJsonVisitor<'a, 'b> {
                     "Aggregates": expr_vec_fmt!(aggr_expr)
                 })
             }
-            LogicalPlan::Sort(Sort { expr, fetch, .. }) => {
+            LogicalPlan::Sort(Sort {
+                expr, fetch, skip, ..
+            }) => {
                 let mut object = json!({
                     "Node Type": "Sort",
                     "Sort Key": expr_vec_fmt!(expr),
@@ -480,6 +482,10 @@ impl<'a, 'b> PgJsonVisitor<'a, 'b> {
 
                 if let Some(fetch) = fetch {
                     object["Fetch"] = serde_json::Value::Number((*fetch).into());
+                }
+
+                if let Some(skip) = skip {
+                    object["Skip"] = serde_json::Value::Number((*skip).into());
                 }
 
                 object

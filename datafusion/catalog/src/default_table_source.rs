@@ -135,6 +135,7 @@ fn preserves_table_type() {
             _: Option<&Vec<usize>>,
             _: &[Expr],
             _: Option<usize>,
+            _: Option<usize>,
         ) -> Result<Arc<dyn datafusion_physical_plan::ExecutionPlan>, DataFusionError>
         {
             unimplemented!()

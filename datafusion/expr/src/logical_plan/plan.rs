@@ -883,6 +883,7 @@ impl LogicalPlan {
             LogicalPlan::Sort(Sort {
                 expr: sort_expr,
                 fetch,
+                skip,
                 ..
             }) => {
                 let input = self.only_input(inputs)?;
@@ -894,6 +895,7 @@ impl LogicalPlan {
                         .collect(),
                     input: Arc::new(input),
                     fetch: *fetch,
+                    skip: *skip,
                 }))
             }
             LogicalPlan::Join(Join {
@@ -1937,7 +1939,9 @@ impl LogicalPlan {
                         expr_vec_fmt!(group_expr),
                         expr_vec_fmt!(aggr_expr)
                     ),
-                    LogicalPlan::Sort(Sort { expr, fetch, .. }) => {
+                    LogicalPlan::Sort(Sort {
+                        expr, fetch, skip, ..
+                    }) => {
                         write!(f, "Sort: ")?;
                         for (i, expr_item) in expr.iter().enumerate() {
                             if i > 0 {
@@ -1945,8 +1949,13 @@ impl LogicalPlan {
                             }
                             write!(f, "{expr_item}")?;
                         }
+
                         if let Some(a) = fetch {
                             write!(f, ", fetch={a}")?;
+                        }
+
+                        if let Some(s) = skip {
+                            write!(f, ", skip={s}")?;
                         }
 
                         Ok(())
@@ -3774,6 +3783,8 @@ pub struct Sort {
     pub expr: Vec<SortExpr>,
     /// The incoming logical plan
     pub input: Arc<LogicalPlan>,
+    /// Optional number of rows to skip before fetch
+    pub skip: Option<usize>,
     /// Optional fetch limit
     pub fetch: Option<usize>,
 }

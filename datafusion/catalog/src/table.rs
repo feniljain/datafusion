@@ -169,6 +169,7 @@ pub trait TableProvider: Debug + Sync + Send {
         projection: Option<&Vec<usize>>,
         filters: &[Expr],
         limit: Option<usize>,
+        offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>>;
 
     /// Create an [`ExecutionPlan`] for scanning the table using structured arguments.
@@ -196,8 +197,9 @@ pub trait TableProvider: Debug + Sync + Send {
         let filters = args.filters().unwrap_or(&[]);
         let projection = args.projection().map(|p| p.to_vec());
         let limit = args.limit();
+        let offset = args.offset();
         let plan = self
-            .scan(state, projection.as_ref(), filters, limit)
+            .scan(state, projection.as_ref(), filters, limit, offset)
             .await?;
         Ok(plan.into())
     }
@@ -361,6 +363,7 @@ pub struct ScanArgs<'a> {
     filters: Option<&'a [Expr]>,
     projection: Option<&'a [usize]>,
     limit: Option<usize>,
+    offset: Option<usize>,
 }
 
 impl<'a> ScanArgs<'a> {
@@ -421,6 +424,25 @@ impl<'a> ScanArgs<'a> {
     /// Returns the row limit, or `None` if no limit was specified.
     pub fn limit(&self) -> Option<usize> {
         self.limit
+    }
+
+    /// Set the number of rows to skip before limit is applied the scan.
+    ///
+    /// If specified, the scan would skip first N rows and then start reading.
+    /// It is used to optimize queries with `OFFSET` clauses.
+    ///
+    /// # Arguments
+    /// * `offset` - Optional rows to skip
+    pub fn with_offset(mut self, offset: Option<usize>) -> Self {
+        self.offset = offset;
+        self
+    }
+
+    /// Get the number of rows to skip before limit is applied the scan.
+    ///
+    /// Returns the offset count, or `None` if no offset was specified.
+    pub fn offset(&self) -> Option<usize> {
+        self.offset
     }
 }
 

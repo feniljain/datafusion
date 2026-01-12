@@ -75,6 +75,7 @@ impl TableProvider for EmptyTable {
         projection: Option<&Vec<usize>>,
         _filters: &[Expr],
         _limit: Option<usize>,
+        _offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         // even though there is no data, projections apply
         let projected_schema = project_schema(&self.schema, projection)?;

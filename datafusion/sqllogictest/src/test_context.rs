@@ -263,6 +263,7 @@ pub async fn register_temp_table(ctx: &SessionContext) {
             _: Option<&Vec<usize>>,
             _: &[Expr],
             _: Option<usize>,
+            _: Option<usize>,
         ) -> Result<Arc<dyn ExecutionPlan>, DataFusionError> {
             unimplemented!()
         }

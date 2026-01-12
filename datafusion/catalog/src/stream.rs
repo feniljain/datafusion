@@ -325,6 +325,7 @@ impl TableProvider for StreamTable {
         projection: Option<&Vec<usize>>,
         _filters: &[Expr],
         limit: Option<usize>,
+        _offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         let projected_schema = match projection {
             Some(p) => {

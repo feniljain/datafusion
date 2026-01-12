@@ -1012,6 +1012,7 @@ impl DefaultPhysicalPlanner {
             LogicalPlan::Sort(Sort {
                 expr, input, fetch, ..
             }) => {
+                // TODO(feniljain): pass skip here
                 let physical_input = children.one()?;
                 let input_dfschema = input.as_ref().schema();
                 let sort_exprs = create_physical_sort_exprs(
@@ -4167,6 +4168,7 @@ digraph {
             _projection: Option<&Vec<usize>>,
             _filters: &[Expr],
             _limit: Option<usize>,
+            _offset: Option<usize>,
         ) -> Result<Arc<dyn ExecutionPlan>> {
             Ok(Arc::new(NoOpExecutionPlan::new(Arc::clone(
                 &self.physical_schema,

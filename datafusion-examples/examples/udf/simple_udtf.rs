@@ -101,6 +101,7 @@ impl TableProvider for LocalCsvTable {
         projection: Option<&Vec<usize>>,
         _filters: &[Expr],
         _limit: Option<usize>,
+        _offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         let batches = if let Some(max_return_lines) = self.limit {
             // get max return rows from self.batches

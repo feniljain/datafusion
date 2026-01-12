@@ -95,6 +95,7 @@ impl TableProvider for StatisticsValidation {
         filters: &[Expr],
         // limit is ignored because it is not mandatory for a `TableProvider` to honor it
         _limit: Option<usize>,
+        _offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         // Filters should not be pushed down as they are marked as unsupported by default.
         assert_eq!(

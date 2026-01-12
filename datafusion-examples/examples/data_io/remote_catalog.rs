@@ -242,6 +242,7 @@ impl TableProvider for RemoteTable {
         projection: Option<&Vec<usize>>,
         _filters: &[Expr],
         _limit: Option<usize>,
+        _offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         // Note that `scan` is called once the plan begin execution, and thus is
         // async. When interacting with remote data sources, this is the place

@@ -100,6 +100,7 @@ impl TableProvider for StreamingTable {
         projection: Option<&Vec<usize>>,
         _filters: &[Expr],
         limit: Option<usize>,
+        _offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         let physical_sort = if !self.sort_order.is_empty() {
             let df_schema = DFSchema::try_from(Arc::clone(&self.schema))?;

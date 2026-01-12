@@ -466,6 +466,7 @@ mod tests {
             _projection: Option<&Vec<usize>>,
             _filters: &[Expr],
             _limit: Option<usize>,
+            _skip: Option<usize>,
         ) -> Result<Arc<dyn ExecutionPlan>> {
             unimplemented!()
         }

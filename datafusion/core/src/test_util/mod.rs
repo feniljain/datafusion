@@ -226,6 +226,7 @@ impl TableProvider for TestTableProvider {
         _projection: Option<&Vec<usize>>,
         _filters: &[Expr],
         _limit: Option<usize>,
+        _offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         unimplemented!("TestTableProvider is a stub for testing.")
     }

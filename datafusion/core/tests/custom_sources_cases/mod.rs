@@ -232,6 +232,7 @@ impl TableProvider for CustomTableProvider {
         projection: Option<&Vec<usize>>,
         _filters: &[Expr],
         _limit: Option<usize>,
+        _offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         Ok(Arc::new(CustomExecutionPlan::new(projection.cloned())))
     }

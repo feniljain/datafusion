@@ -182,7 +182,8 @@ impl TableProvider for CustomProvider {
         _state: &dyn Session,
         projection: Option<&Vec<usize>>,
         filters: &[Expr],
-        _: Option<usize>,
+        _limit: Option<usize>,
+        _offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         let empty = Vec::new();
         let projection = projection.unwrap_or(&empty);

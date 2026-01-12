@@ -480,6 +480,7 @@ impl TableProvider for GenerateSeriesTable {
         projection: Option<&Vec<usize>>,
         _filters: &[Expr],
         _limit: Option<usize>,
+        _offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         let batch_size = state.config_options().execution.batch_size;
         let generator = self.as_generator(batch_size)?;

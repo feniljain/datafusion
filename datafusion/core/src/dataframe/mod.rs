@@ -2592,6 +2592,7 @@ impl TableProvider for DataFrameTableProvider {
         projection: Option<&Vec<usize>>,
         filters: &[Expr],
         limit: Option<usize>,
+        offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         let mut expr = LogicalPlanBuilder::from(self.plan.clone());
         // Add filter when given
@@ -2606,7 +2607,7 @@ impl TableProvider for DataFrameTableProvider {
 
         // add a limit if given
         if let Some(l) = limit {
-            expr = expr.limit(0, Some(l))?
+            expr = expr.limit(offset.unwrap_or(0), Some(l))?
         }
         let plan = expr.build()?;
         state.create_physical_plan(&plan).await

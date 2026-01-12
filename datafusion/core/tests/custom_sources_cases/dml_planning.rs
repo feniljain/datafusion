@@ -77,6 +77,7 @@ impl TableProvider for CaptureDeleteProvider {
         _projection: Option<&Vec<usize>>,
         _filters: &[Expr],
         _limit: Option<usize>,
+        _offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         Ok(Arc::new(EmptyExec::new(Arc::clone(&self.schema))))
     }
@@ -147,6 +148,7 @@ impl TableProvider for CaptureUpdateProvider {
         _projection: Option<&Vec<usize>>,
         _filters: &[Expr],
         _limit: Option<usize>,
+        _offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         Ok(Arc::new(EmptyExec::new(Arc::clone(&self.schema))))
     }

@@ -808,7 +808,7 @@ impl LogicalPlanBuilder {
         self,
         sorts: impl IntoIterator<Item = impl Into<SortExpr>> + Clone,
     ) -> Result<Self> {
-        self.sort_with_limit(sorts, None)
+        self.sort_with_limit(sorts, None, None)
     }
 
     /// Apply a sort
@@ -816,6 +816,7 @@ impl LogicalPlanBuilder {
         self,
         sorts: impl IntoIterator<Item = impl Into<SortExpr>> + Clone,
         fetch: Option<usize>,
+        skip: Option<usize>,
     ) -> Result<Self> {
         let sorts = rewrite_sort_cols_by_aggs(sorts, &self.plan)?;
 
@@ -841,6 +842,7 @@ impl LogicalPlanBuilder {
                 expr: normalize_sorts(sorts, &self.plan)?,
                 input: self.plan,
                 fetch,
+                skip,
             })));
         }
 
@@ -858,6 +860,7 @@ impl LogicalPlanBuilder {
             expr: normalize_sorts(sorts, &plan)?,
             input: Arc::new(plan),
             fetch,
+            skip,
         });
 
         Projection::try_new(new_expr, Arc::new(sort_plan))

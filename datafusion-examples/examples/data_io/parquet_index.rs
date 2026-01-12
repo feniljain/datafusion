@@ -226,6 +226,7 @@ impl TableProvider for IndexTableProvider {
         projection: Option<&Vec<usize>>,
         filters: &[Expr],
         limit: Option<usize>,
+        offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         let df_schema = DFSchema::try_from(self.schema())?;
         // convert filters like [`a = 1`, `b = 2`] to a single filter like `a = 1 AND b = 2`
@@ -248,7 +249,8 @@ impl TableProvider for IndexTableProvider {
         let mut file_scan_config_builder =
             FileScanConfigBuilder::new(object_store_url, source)
                 .with_projection_indices(projection.cloned())?
-                .with_limit(limit);
+                .with_limit(limit)
+                .with_offset(offset);
 
         // Transform to the format needed to pass to DataSourceExec
         // Create one file group per file (default to scanning them all in parallel)

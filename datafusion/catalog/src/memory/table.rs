@@ -147,7 +147,7 @@ impl MemTable {
     ) -> Result<Self> {
         let schema = t.schema();
         let constraints = t.constraints();
-        let exec = t.scan(state, None, &[], None).await?;
+        let exec = t.scan(state, None, &[], None, None).await?;
         let partition_count = exec.output_partitioning().partition_count();
 
         let mut join_set = JoinSet::new();
@@ -235,6 +235,7 @@ impl TableProvider for MemTable {
         projection: Option<&Vec<usize>>,
         _filters: &[Expr],
         _limit: Option<usize>,
+        _offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         let mut partitions = vec![];
         for arc_inner_vec in self.batches.iter() {

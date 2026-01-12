@@ -152,6 +152,9 @@ pub struct FileScanConfig {
     /// The maximum number of records to read from this plan. If `None`,
     /// all records after filtering are returned.
     pub limit: Option<usize>,
+    /// Number of records to skip before starting to read `limit` rows. If `None,
+    /// records are read from the start.
+    pub offset: Option<usize>,
     /// All equivalent lexicographical orderings that describe the schema.
     pub output_ordering: Vec<LexOrdering>,
     /// File compression type
@@ -240,6 +243,7 @@ pub struct FileScanConfigBuilder {
     object_store_url: ObjectStoreUrl,
     file_source: Arc<dyn FileSource>,
     limit: Option<usize>,
+    offset: Option<usize>,
     constraints: Option<Constraints>,
     file_groups: Vec<FileGroup>,
     statistics: Option<Statistics>,
@@ -268,6 +272,7 @@ impl FileScanConfigBuilder {
             statistics: None,
             output_ordering: vec![],
             file_compression_type: None,
+            offset: None,
             limit: None,
             constraints: None,
             batch_size: None,
@@ -280,6 +285,13 @@ impl FileScanConfigBuilder {
     /// all records after filtering are returned.
     pub fn with_limit(mut self, limit: Option<usize>) -> Self {
         self.limit = limit;
+        self
+    }
+
+    /// Number of records to skip before starting to read `limit` rows. If `None,
+    /// records are read from the start.
+    pub fn with_offset(mut self, offset: Option<usize>) -> Self {
+        self.offset = offset;
         self
     }
 
@@ -449,6 +461,7 @@ impl FileScanConfigBuilder {
         let Self {
             object_store_url,
             file_source,
+            offset,
             limit,
             constraints,
             file_groups,
@@ -470,6 +483,7 @@ impl FileScanConfigBuilder {
         FileScanConfig {
             object_store_url,
             file_source,
+            offset,
             limit,
             constraints,
             file_groups,
@@ -493,6 +507,7 @@ impl From<FileScanConfig> for FileScanConfigBuilder {
             output_ordering: config.output_ordering,
             file_compression_type: Some(config.file_compression_type),
             limit: config.limit,
+            offset: config.offset,
             constraints: Some(config.constraints),
             batch_size: config.batch_size,
             expr_adapter_factory: config.expr_adapter_factory,

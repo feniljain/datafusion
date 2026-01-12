@@ -136,6 +136,7 @@ impl TableProvider for SimpleCsvTable {
         projection: Option<&Vec<usize>>,
         _filters: &[Expr],
         _limit: Option<usize>,
+        _offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         let batches = if !self.exprs.is_empty() {
             let max_return_lines = self.interpreter_expr(state).await?;

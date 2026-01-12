@@ -87,11 +87,13 @@ impl TableProvider for CteWorkTable {
         projection: Option<&Vec<usize>>,
         filters: &[Expr],
         limit: Option<usize>,
+        offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         let options = ScanArgs::default()
             .with_projection(projection.map(|p| p.as_slice()))
             .with_filters(Some(filters))
-            .with_limit(limit);
+            .with_limit(limit)
+            .with_offset(offset);
         Ok(self.scan_with_args(state, options).await?.into_inner())
     }
 

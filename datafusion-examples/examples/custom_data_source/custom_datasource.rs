@@ -183,6 +183,7 @@ impl TableProvider for CustomDataSource {
         // filters and limit can be used here to inject some push-down operations if needed
         _filters: &[Expr],
         _limit: Option<usize>,
+        _offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         return self.create_physical_plan(projection, self.schema()).await;
     }

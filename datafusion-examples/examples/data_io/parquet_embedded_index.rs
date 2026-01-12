@@ -411,6 +411,7 @@ impl TableProvider for DistinctIndexTable {
         _proj: Option<&Vec<usize>>,
         filters: &[Expr],
         _limit: Option<usize>,
+        _offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         // This example only handles filters of the form
         // `category = 'X'` where X is a string literal

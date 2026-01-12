@@ -236,7 +236,7 @@ mod tests {
         let table = load_table(&ctx, "alltypes_plain.parquet").await?;
         let projection = None;
         let exec = table
-            .scan(&ctx.state(), projection, &[], None)
+            .scan(&ctx.state(), projection, &[], None, None)
             .await
             .expect("Scan table");
 
@@ -399,7 +399,7 @@ mod tests {
         let filter = Expr::not_eq(col("p1"), lit("v1"));
 
         let scan = table
-            .scan(&ctx.state(), None, &[filter], None)
+            .scan(&ctx.state(), None, &[filter], None, None)
             .await
             .expect("Empty execution plan");
 
@@ -1351,7 +1351,7 @@ mod tests {
 
         let table_default = ListingTable::try_new(config_default)?;
 
-        let exec_default = table_default.scan(&state, None, &[], None).await?;
+        let exec_default = table_default.scan(&state, None, &[], None, None).await?;
         assert_eq!(
             exec_default.partition_statistics(None)?.num_rows,
             Precision::Absent
@@ -1372,7 +1372,7 @@ mod tests {
             .with_schema(schema_disabled);
         let table_disabled = ListingTable::try_new(config_disabled)?;
 
-        let exec_disabled = table_disabled.scan(&state, None, &[], None).await?;
+        let exec_disabled = table_disabled.scan(&state, None, &[], None, None).await?;
         assert_eq!(
             exec_disabled.partition_statistics(None)?.num_rows,
             Precision::Absent
@@ -1391,7 +1391,7 @@ mod tests {
             .with_schema(schema_enabled);
         let table_enabled = ListingTable::try_new(config_enabled)?;
 
-        let exec_enabled = table_enabled.scan(&state, None, &[], None).await?;
+        let exec_enabled = table_enabled.scan(&state, None, &[], None, None).await?;
         assert_eq!(
             exec_enabled.partition_statistics(None)?.num_rows,
             Precision::Exact(8)
@@ -1472,7 +1472,7 @@ mod tests {
         let table = ListingTable::try_new(config)?;
 
         // The scan should work correctly
-        let scan_result = table.scan(&ctx.state(), None, &[], None).await;
+        let scan_result = table.scan(&ctx.state(), None, &[], None, None).await;
         assert!(scan_result.is_ok(), "Scan should succeed");
 
         // Verify file listing works

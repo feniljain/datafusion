@@ -116,6 +116,7 @@ impl TableProvider for ViewTable {
         projection: Option<&Vec<usize>>,
         filters: &[Expr],
         limit: Option<usize>,
+        offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         let filter = filters.iter().cloned().reduce(|acc, new| acc.and(new));
         let plan = self.logical_plan().clone();
@@ -147,7 +148,7 @@ impl TableProvider for ViewTable {
         };
 
         if let Some(limit) = limit {
-            plan = plan.limit(0, Some(limit))?;
+            plan = plan.limit(offset.unwrap_or(0), Some(limit))?;
         }
 
         state.create_physical_plan(&plan.build()?).await

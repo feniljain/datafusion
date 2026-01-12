@@ -108,7 +108,7 @@ mod test {
             .unwrap()
             .clone();
         listing_table
-            .scan(&ctx.state(), None, &[], None)
+            .scan(&ctx.state(), None, &[], None, None)
             .await
             .unwrap()
     }

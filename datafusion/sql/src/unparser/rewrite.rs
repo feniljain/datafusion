@@ -75,6 +75,7 @@ pub(super) fn normalize_union_schema(plan: &LogicalPlan) -> Result<LogicalPlan> 
                 expr: rewrite_sort_expr_for_union(sort.expr)?,
                 input: sort.input,
                 fetch: sort.fetch,
+                skip: sort.skip,
             })))
         }
         _ => Ok(Transformed::no(plan)),

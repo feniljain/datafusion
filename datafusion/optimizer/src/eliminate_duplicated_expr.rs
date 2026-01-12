@@ -86,6 +86,7 @@ impl OptimizerRule for EliminateDuplicatedExpr {
                     expr: unique_exprs,
                     input: sort.input,
                     fetch: sort.fetch,
+                    skip: sort.skip,
                 })))
             }
             LogicalPlan::Aggregate(agg) => {

@@ -226,6 +226,7 @@ impl TableProvider for DefaultValueTableProvider {
         projection: Option<&Vec<usize>>,
         filters: &[Expr],
         limit: Option<usize>,
+        offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         let schema = Arc::clone(&self.schema);
         let df_schema = DFSchema::try_from(schema.clone())?;
@@ -260,6 +261,7 @@ impl TableProvider for DefaultValueTableProvider {
         )
         .with_projection_indices(projection.cloned())?
         .with_limit(limit)
+        .with_offset(offset)
         .with_file_group(file_group)
         .with_expr_adapter(Some(Arc::new(DefaultValuePhysicalExprAdapterFactory) as _));
 

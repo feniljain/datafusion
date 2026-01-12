@@ -247,6 +247,7 @@ impl TableProvider for ParquetMetadataTable {
         projection: Option<&Vec<usize>>,
         _filters: &[Expr],
         _limit: Option<usize>,
+        _offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         Ok(MemorySourceConfig::try_new_exec(
             &[vec![self.batch.clone()]],
@@ -496,6 +497,7 @@ impl TableProvider for MetadataCacheTable {
         projection: Option<&Vec<usize>>,
         _filters: &[Expr],
         _limit: Option<usize>,
+        _offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         Ok(MemorySourceConfig::try_new_exec(
             &[vec![self.batch.clone()]],
@@ -614,6 +616,7 @@ impl TableProvider for StatisticsCacheTable {
         projection: Option<&Vec<usize>>,
         _filters: &[Expr],
         _limit: Option<usize>,
+        _offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         Ok(MemorySourceConfig::try_new_exec(
             &[vec![self.batch.clone()]],
@@ -729,6 +732,7 @@ impl TableProvider for ListFilesCacheTable {
         projection: Option<&Vec<usize>>,
         _filters: &[Expr],
         _limit: Option<usize>,
+        _offset: Option<usize>,
     ) -> Result<Arc<dyn ExecutionPlan>> {
         Ok(MemorySourceConfig::try_new_exec(
             &[vec![self.batch.clone()]],
