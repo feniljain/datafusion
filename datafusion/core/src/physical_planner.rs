@@ -460,9 +460,9 @@ impl DefaultPhysicalPlanner {
                 projection,
                 filters,
                 fetch,
+                skip,
                 ..
             }) => {
-                // TODO(feniljain): pass skip here
                 let source = source_as_provider(source)?;
                 // Remove all qualifiers from the scan as the provider
                 // doesn't know (nor should care) how the relation was
@@ -472,7 +472,8 @@ impl DefaultPhysicalPlanner {
                 let opts = ScanArgs::default()
                     .with_projection(projection.as_deref())
                     .with_filters(Some(&filters_vec))
-                    .with_limit(*fetch);
+                    .with_limit(*fetch)
+                    .with_offset(*skip);
                 let res = source.scan_with_args(session_state, opts).await?;
                 Arc::clone(res.plan())
             }

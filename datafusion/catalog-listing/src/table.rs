@@ -401,6 +401,7 @@ impl TableProvider for ListingTable {
         let projection = args.projection().map(|p| p.to_vec());
         let filters = args.filters().map(|f| f.to_vec()).unwrap_or_default();
         let limit = args.limit();
+        let offset = args.offset();
 
         // extract types of partition columns
         let table_partition_cols = self
@@ -492,6 +493,7 @@ impl TableProvider for ListingTable {
                     .with_statistics(statistics)
                     .with_projection_indices(projection)?
                     .with_limit(limit)
+                    .with_offset(offset)
                     .with_output_ordering(output_ordering)
                     .with_expr_adapter(self.expr_adapter_factory.clone())
                     .with_partitioned_by_file_group(partitioned_by_file_group)

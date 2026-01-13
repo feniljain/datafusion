@@ -73,6 +73,9 @@ pub struct MemorySourceConfig {
     /// The maximum number of records to read from this plan. If `None`,
     /// all records after filtering are returned.
     fetch: Option<usize>,
+    /// Number of records to skip before starting to read `limit` rows. If `None,
+    /// records are read from the start.
+    offset: Option<usize>,
 }
 
 impl DataSource for MemorySourceConfig {
@@ -228,6 +231,15 @@ impl DataSource for MemorySourceConfig {
         self.fetch
     }
 
+    fn with_offset(&self, offset: Option<usize>) -> Option<Arc<dyn DataSource>> {
+        let source = self.clone();
+        Some(Arc::new(source.with_offset(offset)))
+    }
+
+    fn offset(&self) -> Option<usize> {
+        self.offset
+    }
+
     fn try_swapping_with_projection(
         &self,
         projection: &ProjectionExprs,
@@ -271,6 +283,7 @@ impl MemorySourceConfig {
             sort_information: vec![],
             show_sizes: true,
             fetch: None,
+            offset: None,
         })
     }
 
@@ -373,6 +386,7 @@ impl MemorySourceConfig {
             sort_information: vec![],
             show_sizes: true,
             fetch: None,
+            offset: None,
         };
         Ok(DataSourceExec::from_data_source(source))
     }
@@ -380,6 +394,12 @@ impl MemorySourceConfig {
     /// Set the limit of the files
     pub fn with_limit(mut self, limit: Option<usize>) -> Self {
         self.fetch = limit;
+        self
+    }
+
+    /// Set the offset of the files
+    pub fn with_offset(mut self, offset: Option<usize>) -> Self {
+        self.offset = offset;
         self
     }
 

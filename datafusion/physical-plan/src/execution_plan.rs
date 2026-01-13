@@ -521,6 +521,23 @@ pub trait ExecutionPlan: Debug + DisplayAs + Send + Sync {
         None
     }
 
+    // TODO(feniljain):
+    // - Explore usage of `with_offset` in implementors of `with_fetch`
+    // - Maybe we dont need these method at all, as `ListingTable` and
+    // other table providers set offset directly on FileScanConfigBuidler,
+    // i.e. `DataSource` impl.
+
+    /// Returns a offset variant of this `ExecutionPlan` node, if it supports
+    /// offset. Returns `None` otherwise.
+    fn with_offset(&self, _offset: Option<usize>) -> Option<Arc<dyn ExecutionPlan>> {
+        None
+    }
+
+    /// Gets the offset count for the operator, `None` means there is no offset.
+    fn offset(&self) -> Option<usize> {
+        None
+    }
+
     /// Gets the effect on cardinality, if known
     fn cardinality_effect(&self) -> CardinalityEffect {
         CardinalityEffect::Unknown

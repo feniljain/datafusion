@@ -170,7 +170,10 @@ pub trait DataSource: Send + Sync + Debug {
 
     /// Return a copy of this DataSource with a new fetch limit
     fn with_fetch(&self, _limit: Option<usize>) -> Option<Arc<dyn DataSource>>;
+    /// Return a copy of this DataSource with a new offset limit
+    fn with_offset(&self, _offset: Option<usize>) -> Option<Arc<dyn DataSource>>;
     fn fetch(&self) -> Option<usize>;
+    fn offset(&self) -> Option<usize>;
     fn metrics(&self) -> ExecutionPlanMetricsSet {
         ExecutionPlanMetricsSet::new()
     }
@@ -330,6 +333,17 @@ impl ExecutionPlan for DataSourceExec {
 
     fn fetch(&self) -> Option<usize> {
         self.data_source.fetch()
+    }
+
+    fn with_offset(&self, offset: Option<usize>) -> Option<Arc<dyn ExecutionPlan>> {
+        let data_source = self.data_source.with_offset(offset)?;
+        let cache = self.cache.clone();
+
+        Some(Arc::new(Self { data_source, cache }))
+    }
+
+    fn offset(&self) -> Option<usize> {
+        self.data_source.offset()
     }
 
     fn try_swapping_with_projection(

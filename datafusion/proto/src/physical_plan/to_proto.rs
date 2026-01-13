@@ -587,6 +587,7 @@ pub fn serialize_file_scan_config(
         })
         .transpose()?;
 
+    // TODO(feniljain): Add offset to proto
     Ok(protobuf::FileScanExecConf {
         file_groups,
         statistics: Some((&conf.statistics()).into()),
