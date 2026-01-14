@@ -452,7 +452,9 @@ mod tests {
 
         let table = ListingTable::try_new(config)?;
 
-        let result = table.list_files_for_scan(&ctx.state(), &[], None).await?;
+        let result = table
+            .list_files_for_scan(&ctx.state(), &[], None, None)
+            .await?;
 
         assert_eq!(result.file_groups.len(), output_partitioning);
 
@@ -487,7 +489,9 @@ mod tests {
 
         let table = ListingTable::try_new(config)?;
 
-        let result = table.list_files_for_scan(&ctx.state(), &[], None).await?;
+        let result = table
+            .list_files_for_scan(&ctx.state(), &[], None, None)
+            .await?;
 
         assert_eq!(result.file_groups.len(), output_partitioning);
 
@@ -537,7 +541,9 @@ mod tests {
 
         let table = ListingTable::try_new(config)?;
 
-        let result = table.list_files_for_scan(&ctx.state(), &[], None).await?;
+        let result = table
+            .list_files_for_scan(&ctx.state(), &[], None, None)
+            .await?;
 
         assert_eq!(result.file_groups.len(), output_partitioning);
 
@@ -1309,7 +1315,9 @@ mod tests {
 
         let table = ListingTable::try_new(config)?;
 
-        let result = table.list_files_for_scan(&ctx.state(), &[], None).await?;
+        let result = table
+            .list_files_for_scan(&ctx.state(), &[], None, None)
+            .await?;
         assert_eq!(result.file_groups.len(), 1);
 
         let files = result.file_groups[0].clone();
@@ -1476,7 +1484,9 @@ mod tests {
         assert!(scan_result.is_ok(), "Scan should succeed");
 
         // Verify file listing works
-        let result = table.list_files_for_scan(&ctx.state(), &[], None).await?;
+        let result = table
+            .list_files_for_scan(&ctx.state(), &[], None, None)
+            .await?;
         assert!(
             !result.file_groups.is_empty(),
             "Should list files successfully"

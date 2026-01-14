@@ -104,6 +104,10 @@ impl FileStream {
     /// bunch of sequential IO), it can be parallelized with decoding.
     fn start_next_file(&mut self) -> Option<Result<FileOpenFuture>> {
         let part_file = self.file_iter.pop_front()?;
+        println!(
+            "DEBUG::start_next_file::opening file::{}",
+            part_file.object_meta.location
+        );
         Some(self.file_opener.open(part_file))
     }
 

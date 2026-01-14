@@ -59,6 +59,8 @@ pub struct ListFilesResult {
     pub statistics: Statistics,
     /// Whether files are grouped by partition values (enables Hash partitioning).
     pub grouped_by_partition: bool,
+    /// Offset remaining after pruning whole files i.e. offset remaining within a file
+    pub remaining_offset: Option<usize>,
 }
 
 /// Built in [`TableProvider`] that reads data from one or more files as a single table.
@@ -423,17 +425,31 @@ impl TableProvider for ListingTable {
                 can_be_evaluated_for_partition_pruning(&table_partition_col_names, filter)
             });
 
-        // We should not limit the number of partitioned files to scan if there are filters and limit
-        // at the same time. This is because the limit should be applied after the filters are applied.
+        // We should not limit/offset the number of partitioned files to scan if there are
+        // filters and limit/offset at the same time. This is because the limit/offset
+        // should be applied after the filters are applied.
         let statistic_file_limit = if filters.is_empty() { limit } else { None };
+        let statistic_file_offset = if filters.is_empty() { offset } else { None };
 
         let ListFilesResult {
             file_groups: mut partitioned_file_lists,
             statistics,
             grouped_by_partition: partitioned_by_file_group,
+            remaining_offset,
         } = self
-            .list_files_for_scan(state, &partition_filters, statistic_file_limit)
+            .list_files_for_scan(
+                state,
+                &partition_filters,
+                statistic_file_limit,
+                statistic_file_offset,
+            )
             .await?;
+
+        let final_remaining_offset = if filters.is_empty() {
+            remaining_offset
+        } else {
+            offset
+        };
 
         // if no files need to be read, return an `EmptyExec`
         if partitioned_file_lists.is_empty() {
@@ -493,7 +509,7 @@ impl TableProvider for ListingTable {
                     .with_statistics(statistics)
                     .with_projection_indices(projection)?
                     .with_limit(limit)
-                    .with_offset(offset)
+                    .with_offset(final_remaining_offset)
                     .with_output_ordering(output_ordering)
                     .with_expr_adapter(self.expr_adapter_factory.clone())
                     .with_partitioned_by_file_group(partitioned_by_file_group)
@@ -609,6 +625,7 @@ impl ListingTable {
         ctx: &'a dyn Session,
         filters: &'a [Expr],
         limit: Option<usize>,
+        offset: Option<usize>,
     ) -> datafusion_common::Result<ListFilesResult> {
         let store = if let Some(url) = self.table_paths.first() {
             ctx.runtime_env().object_store(url)?
@@ -617,6 +634,7 @@ impl ListingTable {
                 file_groups: vec![],
                 statistics: Statistics::new_unknown(&self.file_schema),
                 grouped_by_partition: false,
+                remaining_offset: offset,
             });
         };
         // list files (with partitions)
@@ -648,8 +666,14 @@ impl ListingTable {
             .boxed()
             .buffer_unordered(ctx.config_options().execution.meta_fetch_concurrency);
 
-        let (file_group, inexact_stats) =
-            get_files_with_limit(files, limit, self.options.collect_stat).await?;
+        let (file_group, inexact_stats, remaining_offset) =
+            get_files_with_limit_and_offset(
+                files,
+                limit,
+                offset,
+                self.options.collect_stat,
+            )
+            .await?;
 
         // Threshold: 0 = disabled, N > 0 = enabled when distinct_keys >= N
         //
@@ -695,6 +719,7 @@ impl ListingTable {
             file_groups,
             statistics: stats,
             grouped_by_partition,
+            remaining_offset,
         })
     }
 
@@ -739,38 +764,50 @@ impl ListingTable {
 
 /// Processes a stream of partitioned files and returns a `FileGroup` containing the files.
 ///
-/// This function collects files from the provided stream until either:
-/// 1. The stream is exhausted
-/// 2. The accumulated number of rows exceeds the provided `limit` (if specified)
+/// This function collects files from the provided stream under following conditions:
+/// 1. Skip files till the accumulated number of rows exceeds the provided `offset` (if specified)
+/// 2. The stream is exhausted
+/// 3. The accumulated number of rows exceeds the provided `limit` (if specified)
 ///
 /// # Arguments
 /// * `files` - A stream of `Result<PartitionedFile>` items to process
 /// * `limit` - An optional row count limit. If provided, the function will stop collecting files
 ///   once the accumulated number of rows exceeds this limit
+/// * `offset` - An optional row count offset. If provided, the function will not collect files
+///   till the accumulated number of rows exceeds given offset
 /// * `collect_stats` - Whether to collect and accumulate statistics from the files
 ///
 /// # Returns
-/// A `Result` containing a `FileGroup` with the collected files
-/// and a boolean indicating whether the statistics are inexact.
+/// A `Result` containing:
+/// - a `FileGroup` with the collected files
+/// - a boolean indicating whether the statistics are inexact.
+/// - an Option<usize> indicating optional offset remaining to be skipped in the file
 ///
 /// # Note
 /// The function will continue processing files if statistics are not available or if the
 /// limit is not provided. If `collect_stats` is false, statistics won't be accumulated
 /// but files will still be collected.
-async fn get_files_with_limit(
+async fn get_files_with_limit_and_offset(
     files: impl Stream<Item = datafusion_common::Result<PartitionedFile>>,
     limit: Option<usize>,
+    offset: Option<usize>,
     collect_stats: bool,
-) -> datafusion_common::Result<(FileGroup, bool)> {
+) -> datafusion_common::Result<(FileGroup, bool, Option<usize>)> {
     let mut file_group = FileGroup::default();
     // Fusing the stream allows us to call next safely even once it is finished.
     let mut all_files = Box::pin(files.fuse());
+    #[derive(Debug)]
     enum ProcessingState {
+        SkippingUsingOffset(usize),
         ReadingFiles,
         ReachedLimit,
     }
 
-    let mut state = ProcessingState::ReadingFiles;
+    let (mut final_remaining_offset, mut state) = if let Some(o) = offset {
+        (Some(o), ProcessingState::SkippingUsingOffset(o))
+    } else {
+        (None, ProcessingState::ReadingFiles)
+    };
     let mut num_rows = Precision::Absent;
 
     while let Some(file_result) = all_files.next().await {
@@ -792,7 +829,32 @@ async fn get_files_with_limit(
             };
         }
 
-        // Always add the file to our group
+        // try to skip opening entire file by applying offset
+        if let ProcessingState::SkippingUsingOffset(remaining_offset) = state {
+            if let Precision::Exact(row_count) = num_rows {
+                if row_count <= remaining_offset {
+                    state = ProcessingState::SkippingUsingOffset(
+                        remaining_offset - row_count,
+                    );
+                    continue; // skip reading this file
+                } else {
+                    // we have exhausted offset, lets start
+                    // reading files now and applying limit
+                    state = ProcessingState::ReadingFiles;
+                    final_remaining_offset = if remaining_offset == 0 {
+                        None
+                    } else {
+                        Some(remaining_offset)
+                    };
+                }
+            } else {
+                // TODO(feniljain): What should happen when
+                // we get inexact rows?
+            }
+        }
+
+        // Add files to group after verifying
+        // offset(if present) is exhausted
         file_group.push(file);
 
         // Check if we've hit the limit (if one was specified)
@@ -807,5 +869,5 @@ async fn get_files_with_limit(
     // in, and the statistic could have been different had we processed the
     // files in a different order.
     let inexact_stats = all_files.next().await.is_some();
-    Ok((file_group, inexact_stats))
+    Ok((file_group, inexact_stats, final_remaining_offset))
 }

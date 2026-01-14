@@ -348,6 +348,13 @@ impl FileOpener for ParquetOpener {
                 ArrowReaderMetadata::load_async(&mut async_file_reader, options.clone())
                     .await?;
 
+            // TODO(feniljain):
+            // - use remaining_offset mechanism to tell arrow-rs to skip
+            // decoding rows
+            // if reader_metadata.metadata().file_metadata().num_rows() < self.offset {
+            //     // skip reading the file
+            // }
+
             // Note about schemas: we are actually dealing with **3 different schemas** here:
             // - The table schema as defined by the TableProvider.
             //   This is what the user sees, what they get when they `SELECT * FROM table`, etc.
