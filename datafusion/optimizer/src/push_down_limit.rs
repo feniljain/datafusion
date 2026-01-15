@@ -104,7 +104,7 @@ impl OptimizerRule for PushDownLimit {
         match Arc::unwrap_or_clone(limit.input) {
             LogicalPlan::TableScan(mut scan) => {
                 let new_fetch = scan.fetch.map(|x| min(x, fetch)).or(Some(fetch));
-                let new_skip = scan.fetch.map(|x| max(x, skip)).or(Some(skip));
+                let new_skip = scan.skip.map(|x| max(x, skip)).or(Some(skip));
 
                 // push limit and offset into the table scan itself
                 if new_fetch == scan.fetch && new_skip == scan.skip {
@@ -132,7 +132,7 @@ impl OptimizerRule for PushDownLimit {
 
             LogicalPlan::Sort(mut sort) => {
                 let new_fetch = sort.fetch.map(|x| min(x, fetch)).or(Some(fetch));
-                let new_skip = sort.fetch.map(|x| max(x, skip)).or(Some(skip));
+                let new_skip = sort.skip.map(|x| max(x, skip)).or(Some(skip));
 
                 // push limit and offset into the table sort itself
                 if new_fetch == sort.fetch && new_skip == sort.skip {
